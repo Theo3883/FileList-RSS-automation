@@ -33,7 +33,7 @@ class Config:
         """Create a default configuration file"""
         default_config = {
             'filelist': {
-                'rss_url': 'https://filelist.io/rss.php?feed=dl&cat=24,11,29,30,15,18,16,25,6,26,20,2,3,4,19,1,5,10,9,31,17,22,8,28,27,21,23,13,12,7&passkey=YOUR_PASSKEY_HERE',
+                'rss_url': 'https://filelist.io/rss.php?feed=dl&cat=24,11,29,30,15,18,16,25,6,26,20,2,3,4,19,1,5,10,9,31,17,22,8,28,27,21,23,13,12,7&passkey=69e8a84f711e52ed4e63712d30a85c86',
                 'check_interval': 300,
                 'max_torrents_per_run': 5,
             },

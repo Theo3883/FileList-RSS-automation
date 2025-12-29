@@ -1,0 +1,82 @@
+#!/sbin/openrc-run
+# FileList RSS Handler - OpenRC Init Script
+# Automatically downloads freeleech torrents from FileList
+
+name="FileList RSS Handler"
+description="Automated FileList torrent RSS handler"
+command="/usr/bin/python3"
+command_args="/root/scripts/run.py"
+command_user="root:root"
+pidfile="/var/run/filelist-handler.pid"
+command_background="yes"
+
+# Dependencies - ensure qBittorrent starts first
+depend() {
+    need qbittorrent-nox
+    after qbittorrent-nox
+    use net
+}
+
+# Start the service
+start() {
+    ebegin "Starting ${name}"
+    
+    # Wait for qBittorrent to be ready (with retries)
+    # The handler also has its own retry logic, but we check here too
+    local max_attempts=30
+    local attempt=0
+    local qbittorrent_ready=false
+    
+    einfo "Waiting for qBittorrent-nox to be ready..."
+    
+    while [ $attempt -lt $max_attempts ]; do
+        # Check if qBittorrent service is running
+        if rc-service qbittorrent-nox status > /dev/null 2>&1; then
+            # Check if Web UI is responding
+            if curl -s -u admin:ADMINADMIN http://localhost:8080/api/v2/app/version > /dev/null 2>&1; then
+                qbittorrent_ready=true
+                einfo "qBittorrent-nox is ready"
+                break
+            fi
+        fi
+        
+        attempt=$((attempt + 1))
+        if [ $attempt -lt $max_attempts ]; then
+            sleep 2
+        fi
+    done
+    
+    if [ "$qbittorrent_ready" = false ]; then
+        ewarn "qBittorrent-nox may not be ready, but starting handler anyway (it will retry)"
+        # Don't fail - let the handler's own retry logic handle it
+    fi
+    
+    # Start the handler
+    start-stop-daemon \
+        --start \
+        --background \
+        --make-pidfile \
+        --pidfile "${pidfile}" \
+        --exec "${command}" \
+        -- ${command_args}
+    
+    eend $?
+}
+
+# Stop the service
+stop() {
+    ebegin "Stopping ${name}"
+    start-stop-daemon \
+        --stop \
+        --pidfile "${pidfile}" \
+        --retry=TERM/10/KILL/5
+    eend $?
+}
+
+# Restart the service
+restart() {
+    stop
+    sleep 1
+    start
+}
+

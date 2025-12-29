@@ -23,9 +23,9 @@ class FileListHandler(Subject):
         # Attach logging observer
         self.attach(LoggingObserver())
         
-        # Initialize components
+        # Initialize components with retry logic
         self.rss_parser = RSSFeedParser(self.config.rss_feed_url)
-        self.torrent_client = TorrentClientFactory.create_client(self.config)
+        self.torrent_client = self._connect_to_torrent_client()
         self.storage_manager = StorageManager(
             self.config.get('storage.download_path'),
             self.config.get('storage.max_size_gb')
@@ -36,6 +36,22 @@ class FileListHandler(Subject):
         
         # Get max torrents per run
         self.max_torrents_per_run = self.config.get('filelist.max_torrents_per_run', 5)
+    
+    def _connect_to_torrent_client(self, max_retries=30, retry_delay=2):
+        """Connect to torrent client with retry logic"""
+        for attempt in range(1, max_retries + 1):
+            try:
+                client = TorrentClientFactory.create_client(self.config)
+                logging.info(f"✓ Connected to torrent client on attempt {attempt}")
+                return client
+            except ConnectionError as e:
+                if attempt < max_retries:
+                    logging.warning(f"Attempt {attempt}/{max_retries}: qBittorrent not ready, retrying in {retry_delay}s... ({e})")
+                    time.sleep(retry_delay)
+                else:
+                    logging.error(f"Failed to connect after {max_retries} attempts")
+                    raise
+        raise ConnectionError("Failed to connect to torrent client")
     
     def setup_logging(self):
         """Setup logging configuration"""
@@ -185,4 +201,3 @@ class FileListHandler(Subject):
                 time.sleep(check_interval)
         except KeyboardInterrupt:
             logging.info("\n👋 Shutting down gracefully...")
-
