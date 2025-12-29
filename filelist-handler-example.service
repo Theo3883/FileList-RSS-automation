@@ -1,0 +1,22 @@
+[Unit]
+Description=FileList Torrent RSS Handler
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/filelist_handler
+ExecStart=/usr/bin/python3 /path/to/filelist_handler/run.py
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/filelist-handler.log
+StandardError=append:/var/log/filelist-handler-error.log
+
+# Security (optional hardening)
+# NoNewPrivileges=true
+# PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

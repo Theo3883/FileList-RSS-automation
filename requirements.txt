@@ -1,0 +1,17 @@
+# FileList RSS Handler Requirements
+
+# RSS feed parsing
+feedparser==6.0.10
+
+# HTTP requests
+requests==2.31.0
+
+# YAML configuration
+PyYAML==6.0.1
+
+# Optional: For better qBittorrent API support
+# qbittorrent-api==2024.2.59
+
+# Optional: For Transmission support
+# transmission-rpc==7.0.3
+
